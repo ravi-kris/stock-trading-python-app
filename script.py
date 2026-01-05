@@ -4,7 +4,24 @@ from dotenv import load_dotenv
 load_dotenv()
 import snowflake.connector
 from datetime import datetime
+
+# Polygon API key stays in your .env file
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
+
+# --- Snowflake connection settings ---
+# These are wired to the Snowflake account accessed via
+# https://app.snowflake.com/biemlpv/ky58063/#/homepage
+SNOWFLAKE_USER = "ravikris"
+SNOWFLAKE_PASSWORD = "nehgockunsY0kyfpyx"
+# Derived from the Snowflake URL above; adjust if needed
+SNOWFLAKE_ACCOUNT = "ky58063"
+
+# You can override these with environment variables if you like
+SNOWFLAKE_WAREHOUSE = os.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH")
+SNOWFLAKE_DATABASE = os.getenv("SNOWFLAKE_DATABASE", "STOCKS_DB")
+SNOWFLAKE_SCHEMA = os.getenv("SNOWFLAKE_SCHEMA", "PUBLIC")
+SNOWFLAKE_ROLE = os.getenv("SNOWFLAKE_ROLE") or None
+SNOWFLAKE_TABLE = os.getenv("SNOWFLAKE_TABLE", "stock_tickers")
 
 LIMIT = 1000
 DS = '2025-09-25'
@@ -53,36 +70,26 @@ def run_stock_job():
 
 
 def load_to_snowflake(rows, fieldnames):
-    # Build connection kwargs from environment variables
+    # Build connection kwargs from the configured constants / env defaults
     connect_kwargs = {
-        'user': os.getenv('SNOWFLAKE_USER'),
-        'password': os.getenv('SNOWFLAKE_PASSWORD'),
+        "user": SNOWFLAKE_USER,
+        "password": SNOWFLAKE_PASSWORD,
+        "account": SNOWFLAKE_ACCOUNT,
+        "warehouse": SNOWFLAKE_WAREHOUSE,
+        "database": SNOWFLAKE_DATABASE,
+        "schema": SNOWFLAKE_SCHEMA,
     }
-    account = os.getenv('SNOWFLAKE_ACCOUNT')
-    if account:
-        connect_kwargs['account'] = account
+    if SNOWFLAKE_ROLE:
+        connect_kwargs["role"] = SNOWFLAKE_ROLE
 
-    warehouse = os.getenv('SNOWFLAKE_WAREHOUSE')
-    database = os.getenv('SNOWFLAKE_DATABASE')
-    schema = os.getenv('SNOWFLAKE_SCHEMA')
-    role = os.getenv('SNOWFLAKE_ROLE')
-    if warehouse:
-        connect_kwargs['warehouse'] = warehouse
-    if database:
-        connect_kwargs['database'] = database
-    if schema:
-        connect_kwargs['schema'] = schema
-    if role:
-        connect_kwargs['role'] = role
-
-    print(connect_kwargs)
     conn = snowflake.connector.connect( 
-        user=connect_kwargs['user'],
-        password=connect_kwargs['password'],
-        account=connect_kwargs['account'],
-        database=connect_kwargs['database'],
-        schema=connect_kwargs['schema'],
-        role=connect_kwargs['role'],
+        user=connect_kwargs["user"],
+        password=connect_kwargs["password"],
+        account=connect_kwargs["account"],
+        warehouse=connect_kwargs.get("warehouse"),
+        database=connect_kwargs.get("database"),
+        schema=connect_kwargs.get("schema"),
+        role=connect_kwargs.get("role"),
         session_parameters={
         "CLIENT_TELEMETRY_ENABLED": False,
         }
@@ -90,7 +97,7 @@ def load_to_snowflake(rows, fieldnames):
     try:
         cs = conn.cursor()
         try:
-            table_name = os.getenv('SNOWFLAKE_TABLE', 'stock_tickers')
+            table_name = SNOWFLAKE_TABLE
 
             # Define typed schema based on example_ticker
             type_overrides = {
