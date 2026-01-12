@@ -9,12 +9,17 @@ from datetime import datetime
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 
 # --- Snowflake connection settings ---
-# These are wired to the Snowflake account accessed via
-# https://app.snowflake.com/biemlpv/ky58063/#/homepage
-SNOWFLAKE_USER = "ravikris"
-SNOWFLAKE_PASSWORD = "nehgockunsY0kyfpyx"
-# Derived from the Snowflake URL above; adjust if needed
-SNOWFLAKE_ACCOUNT = "ky58063"
+# These should be set in your .env file or environment variables
+# Snowflake account URL: https://app.snowflake.com/biemlpv/ky58063/#/homepage
+SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
+SNOWFLAKE_PASSWORD = os.getenv("SNOWFLAKE_PASSWORD")
+SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT", "ky58063")
+
+# Validate required credentials
+if not SNOWFLAKE_USER or not SNOWFLAKE_PASSWORD:
+    raise ValueError(
+        "SNOWFLAKE_USER and SNOWFLAKE_PASSWORD must be set in environment variables or .env file"
+    )
 
 # You can override these with environment variables if you like
 SNOWFLAKE_WAREHOUSE = os.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH")
