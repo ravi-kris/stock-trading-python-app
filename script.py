@@ -145,7 +145,7 @@ def load_to_snowflake(rows, fieldnames):
 
 
 if __name__ == '__main__':
-    run_stock_job()
+        run_stock_job()
 
 
 
